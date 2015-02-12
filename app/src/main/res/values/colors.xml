@@ -1,0 +1,10 @@
+<resources>
+    <color name="colorPrimary">#5677fc</color>
+    <color name="colorPrimaryDark">@color/material_blue_grey_900</color>
+
+    <color name="colorSecondary">@color/material_deep_teal_200</color>
+    <color name="colorSecondaryDark">@color/material_deep_teal_500</color>
+
+    <color name="windowBackgroundColor">@color/background_material_light</color>
+    <color name="black_translucent">#80000000</color>
+</resources>
