@@ -14,7 +14,6 @@ public class GPSPoint {
     float Speed;
     int Satellites;
     long Time;
-    String sTime;
 
     public GPSPoint(double lat, double lon, float sp,  double accuracy, long time, int sat)
     {
@@ -54,14 +53,28 @@ public class GPSPoint {
 
     public String toTxtString()
     {
-        String s = String.format(
-                "%1$.8f|%2$.8f|%3$.2f|%4$d|%5$.3f|%6$tF %6$tT\n",
+        /*String s = String.format(
+                "%1$.8f|%2$.8f|%5$.6f|%4$d|%5$.3f|%6$tF %6$tT\n",
                 this.Latitude,
                 this.Longitude,
                 this.Accuracy,
                 this.Satellites,
                 this.Speed,
-                new Date(this.Time));
+                new Date(this.Time));*/
+
+        //X|Y|Speed|датаивремяобычное|времяпоспутнику|колвоспутниковГПС|колвоспутниковГЛОНАСС|точность
+
+        String s = String.format(
+                "%1$.8f|%2$.8f|%3$.6f|%4$tF %4$tT|%5$d|%6$d|%7$d|%8$.3f\n",
+                this.Latitude,
+                this.Longitude,
+                this.Speed,
+                new Date(this.Time),
+                this.Time,
+                this.Satellites,
+                0,
+                this.Accuracy);
+
 
         Log.d("MMV", s);
         return s;
