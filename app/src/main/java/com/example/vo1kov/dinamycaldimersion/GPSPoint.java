@@ -81,6 +81,11 @@ public class GPSPoint {
 
     }
 
+    public int getSat()
+    {
+        return this.Satellites;
+
+    }
 
     public String ToString()
     {

@@ -1,5 +1,6 @@
 package com.example.vo1kov.dinamycaldimersion;
 
+import android.location.GpsStatus;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -17,6 +18,7 @@ import android.location.LocationManager;
 
 //import
 import android.os.Build;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Button;
 
@@ -49,6 +51,24 @@ public class MainActivity extends ActionBarActivity {
     Timer timer;
     GPSPoint p;
     long rec;
+    ProgressBar progSat;
+
+    ArrayList<String> nmeaPref;
+
+    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
+        @Override
+        public void onNmeaReceived(long timestamp, String nmea) {
+            String pref=nmea.substring(1,6);
+            if(nmeaPref.contains(pref)==false)
+            {
+            nmeaPref.add(pref);
+                Log.d("2MMV",nmea);
+            }
+            //Log.d("1MMV", "NMEA " + nmea);
+        }
+    };
+
+
     private LocationListener locationListener = new LocationListener() {
 
         @Override
@@ -96,6 +116,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+    nmeaPref = new ArrayList<>();
 
 
         if (savedInstanceState == null) {
@@ -106,7 +127,13 @@ public class MainActivity extends ActionBarActivity {
 
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
         Log.d(LOG_TAG, "location manager создан");
+        List<String> prov = locationManager.getAllProviders();
+
+        for(String pr :prov)
+            Log.d("1MMV",pr);
+
         record = new ArrayList<GPSPoint>();
 
 
@@ -118,6 +145,8 @@ public class MainActivity extends ActionBarActivity {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 1000 * 1, 10, locationListener);
         //checkEnabled();
+
+        locationManager.addNmeaListener(nmeaListener);
 
         timer = new Timer();
         TimerTask task = new TimerTask() {
@@ -141,6 +170,9 @@ public class MainActivity extends ActionBarActivity {
             //record.add(new GPSPoint(p));
             p.renewTime(new Date().getTime());
             if (textStatus == null) textStatus = (TextView) findViewById(R.id.textViewStatus);
+            if(progSat == null) progSat = (ProgressBar) findViewById(R.id.progressBar);
+            progSat.setMax(24);
+            progSat.setProgress(p.getSat());
 
 
             if (bw != null) {
@@ -232,6 +264,7 @@ public class MainActivity extends ActionBarActivity {
 
     public void onClickRecOff(View view) {
 
+       nmeaPref.clear();
         if (bw != null)
             try {
                 bw.close();
