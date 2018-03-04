@@ -20,8 +20,8 @@ public class GPSPoint {
         this.Latitude =lat;
         this.Longitude=lon;
         this.Speed=(float)(sp*3.6);
-        //this.Time = time;
-        this.Time = new Date().getTime();
+        this.Time = time;
+        //this.Time = new Date().getTime();
         this.Accuracy = accuracy;
         this.Satellites = sat;
 
@@ -99,7 +99,7 @@ public class GPSPoint {
                 new Date(this.Time));
 
        // Log.d("MMV", s);
-        return s;
+        return s+"\n"+this.Time;
 
     }
 

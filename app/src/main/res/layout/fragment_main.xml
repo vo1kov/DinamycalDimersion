@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:weightSum="1">
 
 
 
@@ -33,7 +34,10 @@
         android:layout_height="wrap_content"
         android:text="@string/RecOff"
         android:onClick="onClickRecOff"
-        android:id="@+id/buttonRecOff" />
+        android:id="@+id/buttonRecOff"
+        android:layout_marginTop="30dp" />
+
+
 
 
 </LinearLayout>

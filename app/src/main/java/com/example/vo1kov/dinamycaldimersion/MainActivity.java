@@ -1,11 +1,9 @@
 package com.example.vo1kov.dinamycaldimersion;
 
-import android.location.GpsStatus;
 import android.os.Environment;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,12 +15,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 
 //import
-import android.os.Build;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Button;
-
-import org.w3c.dom.Text;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,16 +25,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 
 public class MainActivity extends ActionBarActivity {
-
-
-    // @InjectView(R.id.textView1 ) TextView status;
-    // @InjectView(R.id.button ) Button start;
-
     final String DIR_SD = "GPSTracks";
     final String LOG_TAG = "MMV";
     StringBuilder sbGPS = new StringBuilder();
@@ -48,14 +35,14 @@ public class MainActivity extends ActionBarActivity {
     TextView status;
     String FILENAME_SD = "gps.txt";
     TextView textStatus;
-    Timer timer;
+   // Timer timer;
     GPSPoint p;
     long rec;
     ProgressBar progSat;
 
     ArrayList<String> nmeaPref;
 
-    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
+    /*GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
         @Override
         public void onNmeaReceived(long timestamp, String nmea) {
             String pref=nmea.substring(1,6);
@@ -64,9 +51,17 @@ public class MainActivity extends ActionBarActivity {
             nmeaPref.add(pref);
                 Log.d("2MMV",nmea);
             }
+
+            NMEAMessage m = new NMEAMessage(nmea);
+
+            if(m.Type!=null)
+            {
+                Log.d("QQQ","");
+
+            }
             //Log.d("1MMV", "NMEA " + nmea);
         }
-    };
+    };*/
 
 
     private LocationListener locationListener = new LocationListener() {
@@ -79,11 +74,29 @@ public class MainActivity extends ActionBarActivity {
 
 
             p = new GPSPoint(location.getLatitude(), location.getLongitude(), location.getSpeed(), location.getAccuracy(), location.getTime(), sat);
-            //Log.d(LOG_TAG,"p созданно");
 
 
-            //String s = p.ToString();
+            if (p != null) {
+                if (textStatus == null) textStatus = (TextView) findViewById(R.id.textViewStatus);
+                if(progSat == null) progSat = (ProgressBar) findViewById(R.id.progressBar);
+                progSat.setMax(24);
+                progSat.setProgress(p.getSat());
 
+
+                if (bw != null) {
+                    try {
+                        rec++;
+                        bw.write(p.toTxtString());
+                        textStatus.setText(p.ToString() + String.format("\nИДЕТ ЗАПИСЬ - %1$d",rec));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    textStatus.setText(p.ToString() + "\nЗАПИСЬ ВЫКЛЮЧЕНА");
+                }
+            }
         }
 
         @Override
@@ -101,6 +114,7 @@ public class MainActivity extends ActionBarActivity {
         public void onStatusChanged(String provider, int status, Bundle extras) {
             if (provider.equals(LocationManager.GPS_PROVIDER)) {
                 Log.d(LOG_TAG, "GPS - Status: " + String.valueOf(status));
+                textStatus.setText("GPS - Status: " + String.valueOf(status));
 
             } else if (provider.equals(LocationManager.NETWORK_PROVIDER)) {
                 Log.d(LOG_TAG, "GSM - Status: " + String.valueOf(status));
@@ -125,8 +139,8 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
 
-
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         Log.d(LOG_TAG, "location manager создан");
         List<String> prov = locationManager.getAllProviders();
@@ -142,60 +156,24 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                1000 * 1, 10, locationListener);
-        //checkEnabled();
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
-        locationManager.addNmeaListener(nmeaListener);
-
-        timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        addPoint();
-                    }
-                });
-            }
-        };
-        timer.schedule(task, 0, 1000);
-
-
-    }
-
-    void addPoint() {
-        if (p != null) {
-            //record.add(new GPSPoint(p));
-            p.renewTime(new Date().getTime());
-            if (textStatus == null) textStatus = (TextView) findViewById(R.id.textViewStatus);
-            if(progSat == null) progSat = (ProgressBar) findViewById(R.id.progressBar);
-            progSat.setMax(24);
-            progSat.setProgress(p.getSat());
-
-
-            if (bw != null) {
-                try {
-                    rec++;
-                    bw.write(p.toTxtString());
-                    textStatus.setText(p.ToString() + String.format("\nИДЕТ ЗАПИСЬ - %1$d",rec));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            else
-            {
-                textStatus.setText(p.ToString() + "\nЗАПИСЬ ВЫКЛЮЧЕНА");
-            }
-        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        locationManager.removeUpdates(locationListener);
-        timer.cancel();
+        try
+        {
+            locationManager.removeUpdates(locationListener);
+        }
+        catch (Exception e)
+        {
+            Log.e("MMV", e.getMessage());
+
+        }
+
+
         if (bw != null)
             try {
                 bw.close();
@@ -224,11 +202,6 @@ public class MainActivity extends ActionBarActivity {
                 location.getLatitude(), location.getLongitude(), new Date(
                         location.getTime()));
     }
-
-    //@OnClick(R.id.button)
-    //public void submit(View view) {
-    //    status.setText("Ололололо!");
-    //}
 
     private void checkEnabled() {
         Log.d(LOG_TAG, "Enabled: "
@@ -293,7 +266,7 @@ public class MainActivity extends ActionBarActivity {
         File sdFile = new File(sdPath, String.format("%1$tF_%1$tT.txt",new Date()));
         try {
             // открываем поток для записи
-             bw = new BufferedWriter(new FileWriter(sdFile));
+            bw = new BufferedWriter(new FileWriter(sdFile));
 
         } catch (IOException e) {
             e.printStackTrace();
