@@ -1,9 +1,13 @@
 package com.example.vo1kov.dinamycaldimersion;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,16 +22,22 @@ import android.location.LocationManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.backendless.Backendless;
+import com.backendless.async.callback.AsyncCallback;
+import com.backendless.exceptions.BackendlessFault;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
     final String DIR_SD = "GPSTracks";
     final String LOG_TAG = "MMV";
     StringBuilder sbGPS = new StringBuilder();
@@ -35,7 +45,7 @@ public class MainActivity extends ActionBarActivity {
     TextView status;
     String FILENAME_SD = "gps.txt";
     TextView textStatus;
-   // Timer timer;
+    // Timer timer;
     GPSPoint p;
     long rec;
     ProgressBar progSat;
@@ -69,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onLocationChanged(Location location) {
             showLocation(location);
+            storeLocation(formatLocation(location));
             int sat = 0;
             if (location.getExtras() != null) sat = location.getExtras().getInt("satellites");
 
@@ -78,7 +89,7 @@ public class MainActivity extends ActionBarActivity {
 
             if (p != null) {
                 if (textStatus == null) textStatus = (TextView) findViewById(R.id.textViewStatus);
-                if(progSat == null) progSat = (ProgressBar) findViewById(R.id.progressBar);
+                if (progSat == null) progSat = (ProgressBar) findViewById(R.id.progressBar);
                 progSat.setMax(24);
                 progSat.setProgress(p.getSat());
 
@@ -87,13 +98,11 @@ public class MainActivity extends ActionBarActivity {
                     try {
                         rec++;
                         bw.write(p.toTxtString());
-                        textStatus.setText(p.ToString() + String.format("\nИДЕТ ЗАПИСЬ - %1$d",rec));
+                        textStatus.setText(p.ToString() + String.format("\nИДЕТ ЗАПИСЬ - %1$d", rec));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-                else
-                {
+                } else {
                     textStatus.setText(p.ToString() + "\nЗАПИСЬ ВЫКЛЮЧЕНА");
                 }
             }
@@ -130,7 +139,20 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-    nmeaPref = new ArrayList<>();
+
+        Backendless.setUrl( Defaults.SERVER_URL );
+        Backendless.initApp( getApplicationContext(), Defaults.APPLICATION_ID, Defaults.API_KEY );
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+        }
+
+
+        nmeaPref = new ArrayList<>();
 
 
         if (savedInstanceState == null) {
@@ -145,8 +167,8 @@ public class MainActivity extends ActionBarActivity {
         Log.d(LOG_TAG, "location manager создан");
         List<String> prov = locationManager.getAllProviders();
 
-        for(String pr :prov)
-            Log.d("1MMV",pr);
+        for (String pr : prov)
+            Log.d("1MMV", pr);
 
         record = new ArrayList<GPSPoint>();
 
@@ -156,19 +178,21 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        try
-        {
+        try {
             locationManager.removeUpdates(locationListener);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Log.e("MMV", e.getMessage());
 
         }
@@ -177,7 +201,7 @@ public class MainActivity extends ActionBarActivity {
         if (bw != null)
             try {
                 bw.close();
-                bw=null;
+                bw = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -188,10 +212,32 @@ public class MainActivity extends ActionBarActivity {
             return;
         if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
             Log.d(LOG_TAG, "GPS + " + formatLocation(location));
+
+
+
         } else if (location.getProvider().equals(
                 LocationManager.NETWORK_PROVIDER)) {
             Log.d(LOG_TAG, "GSM + " + formatLocation(location));
         }
+    }
+
+
+    private void storeLocation(String location)
+    {
+        HashMap testObject = new HashMap<>();
+        testObject.put( "data", location );
+        Backendless.Data.of( "TestTable" ).save(testObject, new AsyncCallback<Map>() {
+            @Override
+            public void handleResponse(Map response) {
+                Log.d("MMV","saved in Backendless. Please check in the console.");
+            }
+
+            @Override
+            public void handleFault(BackendlessFault fault) {
+                Log.e( "MYAPP", "Server reported an error " + fault.getMessage() );
+            }
+        });
+
     }
 
     private String formatLocation(Location location) {
@@ -237,11 +283,11 @@ public class MainActivity extends ActionBarActivity {
 
     public void onClickRecOff(View view) {
 
-       nmeaPref.clear();
+        nmeaPref.clear();
         if (bw != null)
             try {
                 bw.close();
-                bw=null;
+                bw = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -249,7 +295,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void onClickRecOn(View view) {
-        rec=0;
+        rec = 0;
         // проверяем доступность SD
         if (!Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
@@ -263,7 +309,7 @@ public class MainActivity extends ActionBarActivity {
         // создаем каталог
         sdPath.mkdirs();
         // формируем объект File, который содержит путь к файлу
-        File sdFile = new File(sdPath, String.format("%1$tF_%1$tT.txt",new Date()));
+        File sdFile = new File(sdPath, String.format("%1$tF_%1$tT.txt", new Date()));
         try {
             // открываем поток для записи
             bw = new BufferedWriter(new FileWriter(sdFile));

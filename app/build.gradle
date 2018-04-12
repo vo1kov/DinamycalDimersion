@@ -1,20 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "com.example.vo1kov.dinamycaldimersion"
         minSdkVersion 14
 
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
-    }
-
-    lintOptions {
-        disable 'InvalidPackage'
     }
 
     buildTypes {
@@ -23,11 +19,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-}K
+}
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support:appcompat-v7:27.0.2'
+
+    compile group: 'com.backendless', name: 'backendless', version: '4.4.0'
+
     //compile 'com.jakewharton:butterknife:6.1.0'
 }
 
