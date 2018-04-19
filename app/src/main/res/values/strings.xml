@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">DinamycalDimersion</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="status">\n\n\nДОЖДИТЕСЬ ПОЯВЛЕНИЯ СИГНАЛА GPS\n\n\n\n</string>
+    <string name="status">\n\n\nВКЛЮЧИТЕ ЗАПИСЬ\n\n\n\n</string>
     <string name="RecOn">Включить запись</string>
     <string name="RecOff">Выключить запись</string>
-
 </resources>
