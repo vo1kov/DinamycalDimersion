@@ -1,7 +1,10 @@
 package com.example.vo1kov.dinamycaldimersion;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -44,7 +47,7 @@ public class GPSService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            String name = "serv_1";//((EditText) findViewById(R.id.name)).getText().toString();
+            //String name = "serv_1";//((EditText) findViewById(R.id.name)).getText().toString();
             storeLocation(location, name);
         }
 
@@ -75,9 +78,20 @@ public class GPSService extends Service {
         Notification notification;
         if (Build.VERSION.SDK_INT < 16)
             notification = builder.getNotification();
-        else
+        else if (Build.VERSION.SDK_INT < 26)
             notification = builder.build();
+        else {
+            notification = builder.setChannelId("777").build();
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            NotificationChannel channel = new NotificationChannel("777","gps" , NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setShowBadge(false);
+            channel.setSound(null, null);
+            notificationManager.createNotificationChannel(channel);
+        }
         startForeground(777, notification);
+
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
@@ -142,7 +156,7 @@ public class GPSService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(LOG_TAG, "onStartCommand");
 
-        name = intent.getExtras().getString("user","unknown_user");
+        name = intent.getExtras().getString("user", "unknown_user");
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         return super.onStartCommand(intent, flags, startId);
